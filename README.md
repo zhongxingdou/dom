@@ -1,124 +1,202 @@
-Dodo
+Dom
 ======
+A tiny and powerful DOM DSL
 
-principle
-----------
-+ 不使用缩写
-	
-	简练你的程序，少输入几个字母并不能代码简单易懂
 
-+ 强调行为
-	
-	- 避免一连串的对象查找筛选搞晕你的意图
-	
-	- 更加符合英文文法
+Fill Form
+---------
+assume we have a form like below
 
-+ 把参数加到方法名中只会让api数量增多
+```html
+ <form id="userInfoForm" title="user info form">
+        <fieldset>
+            <legend>User Info</legend>
 
-+ 针对上条，把使用度最高的参数加入到方法名中
-	
+            <label for="userName">User Name</label>
+            <input id="userName" name="username" type="text" />
 
+            <label for="interest"> Interest </label>
+            <input type="checkbox" name="interest" value="0" />
+            <label for="write">Painting</label>
+
+            <input type="checkbox" name="interest" value="1" />
+            <label for="sing">Singing</label>
+
+            <input type="checkbox" name="interest" value="2" />
+            <label for="playgame">Play Game</label>
+
+            <label for="gender"> Gender </label>
+            <input type="radio" name="gender" value='1' />
+            <label for="man">Male</label>
+            <input type="radio" name="gender" value='0' />
+            <label for="woman">Female</label>
+
+            <label for="province"> Province </label>
+            <select id="province" name="province">
+                <option>choose...</option>
+                <option value=18>JiangXi</option>
+                <option value=21>HuNan</option>
+                <option value=5>GuangDong</option>
+            </select>
+
+            <label for="intro">Intro</label>
+            <textarea id="intro" name="intro"></textarea>
+
+            <input type="hidden" name="token" value="sd#dsf%88SDkx&9" />
+
+            <button>Save</button>
+        </fieldset>
+    </form>
+```
+
+fill form use dom.js
+
+in Dom.js, a label symbol is a string like '@label' start with '@'
+
+```javascript
+
+Dom.fill("@UserName", "Jerry")
+
+Dom.check("@Painting", "#Singing", "#Play Game")
+
+Dom.uncheck("#Singing")
+
+Dom.choose("@Male")
+
+Dom.select("@Province", "GuangDong")
+
+Dom.fill("@Intro", "Hello, I'm Hal Zhong")
+
+```
+
+Selectors
+---------
+
+### shorts of general selector 
+
+```javascript
+
+Dom.byId('userInfoForm')
+
+Dom.byCss('#userInfoForm select')
+
+Dom.byClass('product')
+
+Dom.byName('interest')
+
+Dom.byTag('form')
+
+```
+
+### oneByXXX()
+return first element against above selector
+
+```javascript
+
+Dom.oneByCss('#productForm .sku')
+
+Dom.oneByTag('form')
+
+Dom.oneByClass('product')
+
+Dom.oneByName('interest')
+
+
+```
+
+### attribute selector 
+
+```javascript
+
+// <label for="userName">UserName</label> <input id="userName" type="text" />
+Dom.byLabel('UserName')
+// => <input id="userName" type="text" />
+
+// <option value="086">China</option>
+Dom.byText('option', 'China')
+
+// <ul title="shoppingList"></ul>
+Dom.byTitle('shoppingList')
+
+
+```
+
+
+### Special tag selector
+
+```javascript
+Dom.button('@Save')
+
+Dom.fieldset('@User Info')
+// find <fieldset> by content text of <legend>
+
+Dom.field('@Singing')
+Dom.field('@User Name')
+
+Dom.hidden('token')
+// find hidden <input> by it's name
+
+
+```
+
+### Group elements selector
+for checkbox group and radio group
+
+```javascript
+
+Dom.group('@Interest')
+// equals to
+Dom.group('interest')
+
+```
+
+
+### selector about table
+
+```javascript
+
+var userTable = Dom.byId("studentsTable")
+
+// get the third row
+Dom.row(userTable, 3)
+
+// get rows which index in 3...10
+Dom.row(userTable, 3, 10)
+
+// get rows by given condition
+Dom.row(userTable, {gender: 'male', score: 'better'})
+
+// get rows by custom filter
+Dom.row(userTable, {weight: function(man){ man > 100 } })
+
+// get <td> from ninth cell of eighth row of table
+Dom.cell(userTable, 8, 9)
+```
 
 Alias
 ---------
-
-### alias
-- $("#form1 submit").alias("保存")
-- $("#form1 input[name='name']").alias("姓名")
-- $("#news_list").alias("新闻")
-- $("#form1 .field").alias("表单控件")
-
-### reference
-- button("保存") or element("保存")
-- field("姓名") or element("姓名")
-- list("新闻") or element(“新闻”)
-- all("表单控件") or elements("表单控件")
+in Dom.js, a Alias is a short name of complex selector express
 
 
-ClassName
--------
-* exception
-	- button("保存").hasClass("primary")
-	- button("保存").hasClass(["button","primary"])
-* set
-	- button("保存").setClass("button primary")
-	- button("保存").addClass("primary")
-	- button("保存").removeClass("primary")
-	- button("保存").toggleClass("button")
-* get
-	- button("保存").className()
+```javascript
 
+Dom.withIn(aWrap, function(scope, alias){
+    alias.set('SaveProdBtn', "#userInfoForm button")
+	// equals to
+	alias.set({
+		'saveProdBtn': '#userInforForm button'
+	})
 
-Attributes
-----------
+	alias.get('SaveProdBtn')
+	// => '#form1 submit'
 
-### attribute
-+ exception
-	- button("保存").hasAttribute("data-action")
-+ get
-	- button("保存").attribute("target")
-+ set
-	- button("保存").setAttribute("target","form1")
-+ remove
-	- button("保存").removeAttribute("target")
-+ disabled
-	- disable("保存")
-	- enable("保存")
+	alias('SaveProdBtn')
+	// equals to
+	alias.ref('SaveProdBtn')
+	// => <button>
 
-### property
-+ set
-	- list("新闻列表").setProperty({"innerHTML", "some html…"});
-		
-+ get
-	- list("新闻").property("innerHTML")
-	
-+ HTML
-	- set
-		* list("新闻").setHtml("some html…")
-	- get
-		* list("新闻").html()
+	// remove a short name
+	alias.unset('SaveProdBtn')
+})
 
-### value
-+ get
-	- field("姓名").value()
-+ set	
-	- fillIn("姓名", "李雷")
-	- check("兴趣","唱歌")
-	- uncheck("兴趣","唱歌")
-	- unCheckAll("兴趣")
-	- select("国家", "英国")
-	- selectDefault("国家")
-	- submit("form1")
-
-Traversing
-----------
-+ button("保存").at("#form1 .primary")
-+ button("保存").in()
-+ button("保存").notIn()
-+ button("保存").notAt("#form1 .primary")
-+ totalOf("#form input")
-
-
-	
-	
-Event
------
-
-### bind
-+ when("click",button("save")).then(handle1).then(obj.do("handle", [param1, param2]));
-+ $("xxx").click(validate1)
-
-### unbind
-+ stop(validate).when("保存")
-
-### trigger
-+ auto("click","保存")
-
-
-
-
-
-
-
-
-
+```

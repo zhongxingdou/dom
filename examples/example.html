@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../dist/dom.js"></script>
+</head>
+
+<body>
+    <form id="myForm" name="userinfo" title="用户信息表单">
+        <fieldset>
+            <legend>用户信息</legend>
+            <p>
+                <label for="name1">姓名</label>
+                <input id="name1" name="name1" type="text" />
+            </p>
+            <p>
+                <label for="interest">兴趣</label>
+                <input type="checkbox" name="interest" value="0" id="write" />
+                <label for="write">书法</label>
+                <input type="checkbox" name="interest" value="1" id="sing" />
+                <label for="sing">唱歌</label>
+                <input type="checkbox" name="interest" value="2" id="playgame" />
+                <label for="playgame">游戏</label>
+            </p>
+            <p>
+                <label for="gender">性别</label>
+                <input type="radio" name="gender" value='1' id="man" />
+                <label for="man">男</label>
+                <input type="radio" name="gender" value='0' id="woman" />
+                <label for="woman">女</label>
+            </p>
+            <p>
+                <label for="province">户籍省份</label>
+                <select id="province" name="province">
+                    <option></option>
+                    <option value=18>江西</option>
+                    <option value=21>湖南</option>
+                    <option value=5>广东</option>
+                </select>
+            </p>
+            <p>
+                <label for="intro">个人简介</label>
+                <textarea id="intro" name="intro"></textarea>
+            </p>
+            <input type="hidden" name="myHidden" value="3" />
+            <input type="hidden" name="myHidden2" value="4" />
+            <button>保存</button>
+        </fieldset>
+    </form>
+    <table title="abcTable">
+        <caption valign=bottom>
+            此标题将出现在表格下方。
+        </caption>
+        <thead>
+            <tr><th>id</th><th>name</th><th>score</th></tr>
+        </thead>
+        <tbody>
+            <tr><th>1</th><td>hello</td><td>ok</td></tr>
+            <tr><th>2</th><td>hello</td><td>ok</td></tr>
+            <tr><th>3</th><td>hello</td><td>ok</td></tr>
+            <tr><th>4</th><td>hello</td><td>ok</td></tr>
+            <tr><th>5</th><td>hello</td><td>ok</td></tr>
+            <tr><th>9</th><td title="myT">hello</td><td>ok</td></tr>
+        </tbody>
+    </table>
+    <script src="example.js"></script>
+</body>
+</html>

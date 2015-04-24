@@ -1,0 +1,30 @@
+{
+  "name": "dom",
+  "version": "0.0.1",
+  "description": "A dom DSL about dom query, dom manipulation, dom creation and more",
+  "main": "src/dom.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhongxingdou/dodo.git"
+  },
+  "keywords": [
+    "dom"
+  ],
+  "author": "Hal Zhong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zhongxingdou/dodo/issues"
+  },
+  "homepage": "https://github.com/zhongxingdou/dodo",
+  "devDependencies": {
+    "webpack": "^1.8.9",
+    "gulp-uglify": "^1.2.0",
+    "gulp-watch": "^4.2.4",
+    "gulp": "^3.8.11",
+    "gulp-webpack": "^1.4.0",
+    "gulp-rename": "^1.2.2"
+  }
+}
