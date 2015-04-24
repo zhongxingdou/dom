@@ -9,6 +9,8 @@ gulp.task('watch', function() {
     gulp.watch('./src/**/*.js', ['build'])
 })
 
+gulp.task('w', ['build', 'watch'])
+
 var fs = require('fs')
 var pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 

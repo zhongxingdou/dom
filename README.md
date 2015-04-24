@@ -181,23 +181,18 @@ in Dom.js, a Alias is a short name of complex selector express
 
 ```javascript
 
-Dom.withIn(aWrap, function(scope, alias){
-    alias.set('SaveProdBtn', "#userInfoForm button")
+Dom.withIn(aWrap, function(aWrap, el){
+    el.set('SaveProdBtn', "#userInfoForm button")
 	// equals to
-	alias.set({
+	el.set({
 		'saveProdBtn': '#userInforForm button'
 	})
 
-	alias.get('SaveProdBtn')
-	// => '#form1 submit'
-
-	alias('SaveProdBtn')
-	// equals to
-	alias.ref('SaveProdBtn')
+	el('SaveProdBtn')
 	// => <button>
 
 	// remove a short name
-	alias.unset('SaveProdBtn')
+	el.unset('SaveProdBtn')
 })
 
 ```
