@@ -2,6 +2,9 @@ Dom
 ======
 a tiny and powerful Dom DSL
 
+Label Symbol
+--------
+in Dom.js, a label symbol is a string like '@label' start with '@'
 
 Fill form
 ---------
@@ -50,8 +53,6 @@ assume we have a form like below
 ```
 
 fill form use dom.js
-
-in Dom.js, a label symbol is a string like '@label' start with '@'
 
 ```javascript
 
