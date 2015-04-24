@@ -1,9 +1,9 @@
 Dom
 ======
-A tiny and powerful DOM DSL
+a tiny and powerful Dom DSL
 
 
-Fill Form
+Fill form
 ---------
 assume we have a form like below
 
@@ -122,7 +122,7 @@ Dom.byTitle('shoppingList')
 ```
 
 
-### Special tag selector
+### special tag selector
 
 ```javascript
 Dom.button('@Save')
@@ -139,7 +139,7 @@ Dom.hidden('token')
 
 ```
 
-### Group elements selector
+### group elements selector
 for checkbox group and radio group
 
 ```javascript
