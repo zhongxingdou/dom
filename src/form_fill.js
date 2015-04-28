@@ -1,20 +1,29 @@
 var util = require('./util'),
-    log = require('./log').log
-    by = require('./by')
-    tag = require('./tag_query')
-    scope = require('./scope')
+    log = require('./log').log,
+    by = require('./by'),
+    tag = require('./tag_query'),
+    scope = require('./scope'),
+    assert = require('./assertion')
 
 var findOne = util.findOne,
     isArray = util.isArray,
     _getFieldType = util._getFieldType,
     each = util.each
 
-function _getEl(el) {
-    return el instanceof Element ? el : null
+function _getElByLabelOrName(el, labelTag) {
+    if (assert.isElement(el)) {
+        return el
+    }
+
+    if (assert.isLabelSelector(el)) {
+        return by.byLabel(el, [].concat(labelTag))
+    }
+
+    return by.oneByName(el)
 }
 
-function choose(label) {
-    var field = _getEl(label) || by.byLabel(label, ['input'])
+function choose(labelOrName) {
+    var field = _getElByLabelOrName(labelOrName, 'input')
     if (field && field.type === 'radio') {
         field.checked = true
     }
@@ -22,8 +31,8 @@ function choose(label) {
 
 function check( /* label1, label2, ... */ ) {
     for (var i = 0, l = arguments.length; i < l; i++) {
-        var label = arguments[i]
-        var field = by.byLabel(label, ['input'])
+        var labelOrName = arguments[i]
+        var field = _getElByLabelOrName(labelOrName, 'input')
         if (field && field.type === 'checkbox') {
             field.checked = true
         }
@@ -32,38 +41,56 @@ function check( /* label1, label2, ... */ ) {
 
 function uncheck( /* label1, label2, ... */ ) {
     for (var i = 0, l = arguments.length; i < l; i++) {
-        var label = arguments[i]
-        var field = by.byLabel(label, ['input'])
+        var labelOrName = arguments[i]
+        var field = _getElByLabelOrName(labelOrName, 'input')
         if (field && field.type === 'checkbox') {
             field.checked = false
         }
     }
 }
 
-function select(label, optionText) {
-    var selectEl = _getEl(label) || by.byLabel(label, ['select'])
+function select(labelOrName, optionTextOrValue) {
+    var selectEl = _getElByLabelOrName(labelOrName, 'select')
 
     if (selectEl) {
         var options = selectEl.options
         var i, l, option
 
         if (selectEl.multiple) {
-            if (typeof optionText === 'string') {
-                optionText = [optionText]
+            if (!util.isArray(optionTextOrValue)) {
+                return
             }
+            var values = optionTextOrValue.map(function(item) {
+                return item.toString()
+            })
+
+            var isLabelSelector = assert.isLabelSelector(values[0])
 
             for (i = 0, l = options.length; i < l; i++) {
                 option = options[i]
-                if (optionText.indexOf(option.text) !== -1) {
-                    option.selected = true
+                if (isLabelSelector) {
+                    if (values.indexOf('@' + option.text) !== -1) {
+                        option.selected = true
+                    }
+                } else {
+                    if (values.indexOf(option.value) !== -1) {
+                        option.selected = true
+                    }
                 }
             }
         } else {
             for (i = 0, l = options.length; i < l; i++) {
                 option = options[i]
-                if (option.text === optionText) {
-                    option.selected = true
-                    break
+                if (assert.isLabelSelector(optionTextOrValue)) {
+                    if ('@' + option.text === optionTextOrValue) {
+                        option.selected = true
+                        break
+                    }
+                } else {
+                    if (option.value === optionTextOrValue.toString()) {
+                        option.selected = true
+                        break
+                    }
                 }
             }
         }
@@ -75,17 +102,21 @@ function fillForm(form, labelValueMap) {
         var label, value, el
         for (label in labelValueMap) {
             value = labelValueMap[label]
-            el = by.byLabel(label)
+            el = _getElByLabelOrName(label)
             if (el) {
-                el.value = value
                 if (el.tagName === 'SELECT') {
                     select(el, value)
+                } else {
+                    el.value = value
                 }
             } else { //单选钮组和复选钮组
-                var labelEl = by.byText('label', label)
-                if (labelEl) { //兴趣： 唱歌，跳舞
+                var groupName = label
+                if (assert.isLabelSelector(label)) {
+                    var labelEl = by.byText('label', label.slice(1))
+                    groupName = labelEl.getAttribute('for')
+                }
+                if (groupName) { //兴趣： 唱歌，跳舞
                     //假定单选钮组和复选钮组的组label的for设置为组元素的name
-                    var groupName = labelEl.getAttribute('for')
                     var groupItems = by.byName(groupName)
 
                     if (groupItems.length === 0) {
@@ -100,24 +131,50 @@ function fillForm(form, labelValueMap) {
                     }
 
                     var isCheckboxGroup = type === 'CHECKBOX'
-                    if (isCheckboxGroup && !isArray(value)) {
-                        log(label + ' value should be a Array')
-                        continue
+                    var valueType = 'name'
+                    if (isCheckboxGroup) {
+                        if (!isArray(value)) {
+                            log(label + ' value should be a Array')
+                            continue
+                        } else {
+                            value = value.map(function(item) {
+                                return item.toString()
+                            })
+                            if (assert.isLabelSelector(value[0])) {
+                                valueType = 'label'
+                            }
+                        }
+                    } else {
+                        value = value.toString()
+                        if (assert.isLabelSelector(value)) {
+                            valueType = 'label'
+                        }
                     }
 
                     each(groupItems, function(groupEl, i) {
                         var id = groupEl.id
-
-                        //通过id找到它对应的label
-                        var labelOfEl = by.byAttr('label', 'for', id)
-
                         if (isCheckboxGroup) {
-                            if (value.indexOf(labelOfEl.textContent) !== -1) {
-                                groupEl.checked = true
+                            if (valueType === 'label') {
+                                //通过id找到它对应的label
+                                var labelOfEl = by.byAttr('label', 'for', id)
+                                if (value.indexOf('@' + labelOfEl.textContent) !== -1) {
+                                    groupEl.checked = true
+                                }
+                            } else { // name
+                                if (value.indexOf(groupEl.value) !== -1) {
+                                    groupEl.checked = true
+                                }
                             }
-                        } else { //radio
-                            if (labelOfEl.textContent === value) {
-                                groupEl.checked = true
+                        } else { //radioGroup
+                            if (valueType === 'label') {
+                                var labelOfEl = by.byAttr('label', 'for', id)
+                                if ('@' + labelOfEl.textContent === value) {
+                                    groupEl.checked = true
+                                }
+                            } else { //name
+                                if (value == groupEl.value) {
+                                    groupEl.checked = true
+                                }
                             }
                         }
                     })
@@ -127,8 +184,8 @@ function fillForm(form, labelValueMap) {
     })
 }
 
-function fillIn(label, value) {
-    var field = by.byLabel(label, ['input', 'textarea'])
+function fillIn(labelOrName, value) {
+    var field = _getElByLabelOrName(labelOrName, ['input', 'textarea'])
     if (field) {
         field.value = value
     }
@@ -143,11 +200,15 @@ function setForm(form, nameValueMap) {
 }
 
 function setField(name, value) {
-    var firstEl = _getEl(name)
-    if (!firstEl) {
-        var els = by.byName(name)
-        firstEl = els[0]
+    var els
+    if (assert.isElement(name)) {
+        els = [name]
+    } else if (assert.isDomCollection(name)) {
+        els = name
+    } else {
+        els = by.byName(name)
     }
+    var firstEl = els[0]
 
     var type = _getFieldType(firstEl)
     switch (type) {

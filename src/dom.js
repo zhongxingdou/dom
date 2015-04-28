@@ -6,8 +6,7 @@ var assertion    = require('./assertion'),
 	manipulation = require('./manipulation'),
 	scope        = require('./scope'),
 	tag_query    = require('./tag_query'),
-	util         = require('./util'),
-	Alias        = require('./alias')
+	util         = require('./util')
 
 var variadic    = util.variadic,
 	filterBy    = util.filterBy,
@@ -32,7 +31,6 @@ util.mix(Dom, form_fill)
 util.mix(Dom, log)
 util.mix(Dom, manipulation)
 util.mix(Dom, scope)
-Dom.Alias = Alias
 
 var exclude = ['button','link','field','fieldset', 'form', 'hidden']
 util.mix(Dom, tag_query, null, exclude)

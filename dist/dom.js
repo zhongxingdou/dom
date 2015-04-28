@@ -68,8 +68,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		manipulation = __webpack_require__(5),
 		scope        = __webpack_require__(6),
 		tag_query    = __webpack_require__(7),
-		util         = __webpack_require__(8),
-		Alias        = __webpack_require__(9)
+		util         = __webpack_require__(8)
 
 	var variadic    = util.variadic,
 		filterBy    = util.filterBy,
@@ -94,7 +93,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	util.mix(Dom, log)
 	util.mix(Dom, manipulation)
 	util.mix(Dom, scope)
-	Dom.Alias = Alias
 
 	var exclude = ['button','link','field','fieldset', 'form', 'hidden']
 	util.mix(Dom, tag_query, null, exclude)
@@ -118,10 +116,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return _getFieldType(element) === 'BUTTON'
 	}
 
+	function isElement(element){
+	    return element instanceof Element
+	}
+
+	function isDomCollection(collection){
+	    if(!collection)return false
+	    return collection instanceof HTMLCollection || collection instanceof NodeList
+	}
+
+	function isLabelSelector(label){
+	    return /^@/.test(label)
+	}
 
 	module.exports = {
 	    isField: isField,
-	    isButton: isButton
+	    isButton: isButton,
+	    isElement: isElement,
+	    isDomCollection: isDomCollection,
+	    isLabelSelector: isLabelSelector
 	}
 
 /***/ },
@@ -129,8 +142,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var scope = __webpack_require__(6)
+	var assert = __webpack_require__(1)
 
 	var getScope = scope.getScope
+
 
 	function _makeAttrExp(attr, value) {
 	    if (typeof attr === 'object') {
@@ -161,7 +176,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function byCss(cssSelector) {
-	    return getScope().querySelectorAll(cssSelector)
+	    var type = typeof cssSelector
+	    if (type === 'string') {
+	        return getScope().querySelectorAll(cssSelector)
+	    } else if (type === 'object') {
+
+	    }
+	}
+
+	function define(config) {
+	    var comp = {}
+	    var el, selector, type
+	    var isId = /^#[^ .\[\]]*$/
+	    for (var name in config) {
+	        selector = config[name]
+	        type = typeof selector
+	        el = null
+	        if (type === 'string') {
+	            if (assert.isLabelSelector(selector)) {
+	                el = byLabel(selector)
+	            } else if (isId.test(selector)) {
+	                el = byId(selector.slice(1))
+	            } else {
+	                el = byCss(selector)
+	                if (el.length === 0) el = null
+	            }
+	        } else if (type === 'object') {
+	            if (assert.isElement(selector) || assert.isDomCollection(selector)) {
+	                el = selector
+	            } else {
+	                el = define(selector)
+	            }
+	        }
+	        comp[name] = el
+	    }
+	    return comp
 	}
 
 	function oneByCss(cssSelector) {
@@ -187,14 +236,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function byAttr(tag, attr, value) {
 	    var exp = _makeAttrExp(attr, value)
 	    if (typeof tag === 'string') {
-	        return by.oneByCss(tag + exp)
+	        return oneByCss(tag + exp)
 	    } else if (tag.querySelector) {
 	        return tag.querySelector(exp)
 	    }
-	}
-
-	function byTitle(tag, title) {
-	    return byAttr(tag, 'title', title)
 	}
 
 	function byText(tagName, text) {
@@ -209,6 +254,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function byLabel(text, tags) {
+	    if(assert.isLabelSelector(text)){
+	        text = text.slice(1)
+	    }else{
+	        return
+	    }
+
 	    var label = byText('label', text)
 	    if (!label) {
 	        return null
@@ -246,9 +297,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    byAttr: byAttr,
 
-	    byTitle: byTitle,
 	    byText: byText,
-	    byLabel: byLabel
+	    byLabel: byLabel,
+	    define: define
 	}
 
 /***/ },
@@ -256,22 +307,31 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var util = __webpack_require__(8),
-	    log = __webpack_require__(4).log
-	    by = __webpack_require__(2)
-	    tag = __webpack_require__(7)
-	    scope = __webpack_require__(6)
+	    log = __webpack_require__(4).log,
+	    by = __webpack_require__(2),
+	    tag = __webpack_require__(7),
+	    scope = __webpack_require__(6),
+	    assert = __webpack_require__(1)
 
 	var findOne = util.findOne,
 	    isArray = util.isArray,
 	    _getFieldType = util._getFieldType,
 	    each = util.each
 
-	function _getEl(el) {
-	    return el instanceof Element ? el : null
+	function _getElByLabelOrName(el, labelTag) {
+	    if (assert.isElement(el)) {
+	        return el
+	    }
+
+	    if (assert.isLabelSelector(el)) {
+	        return by.byLabel(el, [].concat(labelTag))
+	    }
+
+	    return by.oneByName(el)
 	}
 
-	function choose(label) {
-	    var field = _getEl(label) || by.byLabel(label, ['input'])
+	function choose(labelOrName) {
+	    var field = _getElByLabelOrName(labelOrName, 'input')
 	    if (field && field.type === 'radio') {
 	        field.checked = true
 	    }
@@ -279,8 +339,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function check( /* label1, label2, ... */ ) {
 	    for (var i = 0, l = arguments.length; i < l; i++) {
-	        var label = arguments[i]
-	        var field = by.byLabel(label, ['input'])
+	        var labelOrName = arguments[i]
+	        var field = _getElByLabelOrName(labelOrName, 'input')
 	        if (field && field.type === 'checkbox') {
 	            field.checked = true
 	        }
@@ -289,38 +349,56 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function uncheck( /* label1, label2, ... */ ) {
 	    for (var i = 0, l = arguments.length; i < l; i++) {
-	        var label = arguments[i]
-	        var field = by.byLabel(label, ['input'])
+	        var labelOrName = arguments[i]
+	        var field = _getElByLabelOrName(labelOrName, 'input')
 	        if (field && field.type === 'checkbox') {
 	            field.checked = false
 	        }
 	    }
 	}
 
-	function select(label, optionText) {
-	    var selectEl = _getEl(label) || by.byLabel(label, ['select'])
+	function select(labelOrName, optionTextOrValue) {
+	    var selectEl = _getElByLabelOrName(labelOrName, 'select')
 
 	    if (selectEl) {
 	        var options = selectEl.options
 	        var i, l, option
 
 	        if (selectEl.multiple) {
-	            if (typeof optionText === 'string') {
-	                optionText = [optionText]
+	            if (!util.isArray(optionTextOrValue)) {
+	                return
 	            }
+	            var values = optionTextOrValue.map(function(item) {
+	                return item.toString()
+	            })
+
+	            var isLabelSelector = assert.isLabelSelector(values[0])
 
 	            for (i = 0, l = options.length; i < l; i++) {
 	                option = options[i]
-	                if (optionText.indexOf(option.text) !== -1) {
-	                    option.selected = true
+	                if (isLabelSelector) {
+	                    if (values.indexOf('@' + option.text) !== -1) {
+	                        option.selected = true
+	                    }
+	                } else {
+	                    if (values.indexOf(option.value) !== -1) {
+	                        option.selected = true
+	                    }
 	                }
 	            }
 	        } else {
 	            for (i = 0, l = options.length; i < l; i++) {
 	                option = options[i]
-	                if (option.text === optionText) {
-	                    option.selected = true
-	                    break
+	                if (assert.isLabelSelector(optionTextOrValue)) {
+	                    if ('@' + option.text === optionTextOrValue) {
+	                        option.selected = true
+	                        break
+	                    }
+	                } else {
+	                    if (option.value === optionTextOrValue.toString()) {
+	                        option.selected = true
+	                        break
+	                    }
 	                }
 	            }
 	        }
@@ -332,17 +410,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var label, value, el
 	        for (label in labelValueMap) {
 	            value = labelValueMap[label]
-	            el = by.byLabel(label)
+	            el = _getElByLabelOrName(label)
 	            if (el) {
-	                el.value = value
 	                if (el.tagName === 'SELECT') {
 	                    select(el, value)
+	                } else {
+	                    el.value = value
 	                }
 	            } else { //单选钮组和复选钮组
-	                var labelEl = by.byText('label', label)
-	                if (labelEl) { //兴趣： 唱歌，跳舞
+	                var groupName = label
+	                if (assert.isLabelSelector(label)) {
+	                    var labelEl = by.byText('label', label.slice(1))
+	                    groupName = labelEl.getAttribute('for')
+	                }
+	                if (groupName) { //兴趣： 唱歌，跳舞
 	                    //假定单选钮组和复选钮组的组label的for设置为组元素的name
-	                    var groupName = labelEl.getAttribute('for')
 	                    var groupItems = by.byName(groupName)
 
 	                    if (groupItems.length === 0) {
@@ -357,24 +439,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 
 	                    var isCheckboxGroup = type === 'CHECKBOX'
-	                    if (isCheckboxGroup && !isArray(value)) {
-	                        log(label + ' value should be a Array')
-	                        continue
+	                    var valueType = 'name'
+	                    if (isCheckboxGroup) {
+	                        if (!isArray(value)) {
+	                            log(label + ' value should be a Array')
+	                            continue
+	                        } else {
+	                            value = value.map(function(item) {
+	                                return item.toString()
+	                            })
+	                            if (assert.isLabelSelector(value[0])) {
+	                                valueType = 'label'
+	                            }
+	                        }
+	                    } else {
+	                        value = value.toString()
+	                        if (assert.isLabelSelector(value)) {
+	                            valueType = 'label'
+	                        }
 	                    }
 
 	                    each(groupItems, function(groupEl, i) {
 	                        var id = groupEl.id
-
-	                        //通过id找到它对应的label
-	                        var labelOfEl = by.byAttr('label', 'for', id)
-
 	                        if (isCheckboxGroup) {
-	                            if (value.indexOf(labelOfEl.textContent) !== -1) {
-	                                groupEl.checked = true
+	                            if (valueType === 'label') {
+	                                //通过id找到它对应的label
+	                                var labelOfEl = by.byAttr('label', 'for', id)
+	                                if (value.indexOf('@' + labelOfEl.textContent) !== -1) {
+	                                    groupEl.checked = true
+	                                }
+	                            } else { // name
+	                                if (value.indexOf(groupEl.value) !== -1) {
+	                                    groupEl.checked = true
+	                                }
 	                            }
-	                        } else { //radio
-	                            if (labelOfEl.textContent === value) {
-	                                groupEl.checked = true
+	                        } else { //radioGroup
+	                            if (valueType === 'label') {
+	                                var labelOfEl = by.byAttr('label', 'for', id)
+	                                if ('@' + labelOfEl.textContent === value) {
+	                                    groupEl.checked = true
+	                                }
+	                            } else { //name
+	                                if (value == groupEl.value) {
+	                                    groupEl.checked = true
+	                                }
 	                            }
 	                        }
 	                    })
@@ -384,8 +492,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function fillIn(label, value) {
-	    var field = by.byLabel(label, ['input', 'textarea'])
+	function fillIn(labelOrName, value) {
+	    var field = _getElByLabelOrName(labelOrName, ['input', 'textarea'])
 	    if (field) {
 	        field.value = value
 	    }
@@ -400,11 +508,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function setField(name, value) {
-	    var firstEl = _getEl(name)
-	    if (!firstEl) {
-	        var els = by.byName(name)
-	        firstEl = els[0]
+	    var els
+	    if (assert.isElement(name)) {
+	        els = [name]
+	    } else if (assert.isDomCollection(name)) {
+	        els = name
+	    } else {
+	        els = by.byName(name)
 	    }
+	    var firstEl = els[0]
 
 	    var type = _getFieldType(firstEl)
 	    switch (type) {
@@ -521,8 +633,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Alias = __webpack_require__(9)
-
 	var _scope = null
 	var _lastScope = null
 
@@ -545,7 +655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function withIn(wrapEl, fn) {
 	    try {
 	        setScope(wrapEl)
-	        fn(wrapEl, Alias.dsl(true))
+	        fn(wrapEl)
 	    } finally {
 	        resetScope()
 	    }
@@ -565,39 +675,46 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var util = __webpack_require__(8)
 	var findOne = util.findOne
+	var by = __webpack_require__(2)
+	var assert = __webpack_require__(1)
 
-	function field(label) {
-	    var el = byLabel(label)
-	    if (Dom.isField(el)) {
+	function field(labelOrName) {
+	    if(assert.isLableSelector(labelOrName)){
+	        var el = by.byLabel(labelOrName)
+	    }else{
+	        var el = by.oneByName(labelOrName)
+	    }
+
+	    if (assert.isField(el)) {
 	        return el
 	    }
 	}
 
 	function button(text) {
 	    var selector = 'input[type=button][value=' + text + ']'
-	    var inputBtn = Dom.oneByCss(selector)
+	    var inputBtn = by.oneByCss(selector)
 	    if (inputBtn) {
 	        return inputBtn
 	    } else {
-	        return Dom.byText('button', text)
+	        return by.byText('button', text)
 	    }
 	}
 
 	function link(text) {
-	    return Dom.byText('a', text)
+	    return by.byText('a', text)
 	}
 
 	function fieldset(text) {
-	    return Dom.byText('legend', text)
+	    return by.byText('legend', text)
 	}
 
 	function hidden(name) {
 	    var selector = 'input[type=hidden][name=' + name + ']'
-	    return Dom.oneByCss(selector)
+	    return by.oneByCss(selector)
 	}
 
 	function form(text) {
-	    var fieldset = Dom.fieldset(text)
+	    var fieldset = fieldset(text)
 	    if (fieldset) {
 	        return fieldset.form
 	    }
@@ -629,11 +746,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function group(label) {
-	    var el = Dom.byText('label', label)
+	    var el = by.byText('label', label)
 	    if (el) { //兴趣： 唱歌，跳舞
 	        //假定单选钮组和复选钮组的组label的for设置为组元素的name
 	        var groupName = el.getAttribute('for')
-	        return Dom.byName(groupName)
+	        return by.byName(groupName)
 	    }
 	    return []
 	}
@@ -777,98 +894,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _getFieldType: _getFieldType,
 	    mix: mix
 	}
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	function Alias(cache) {
-	    this.__map = {}
-	    this.__cache = cache === undefined ? true : !!cache
-	}
-
-	var proto = Alias.prototype
-
-	Alias.dsl = function(cache) {
-	    var alias = new Alias(cache)
-
-	    var dsl = function(name) {
-	        return alias.el(name)
-	    }
-
-	    var func = ['cache', 'set', 'unset', 'clear']
-	    func.forEach(function(method) {
-	        dsl[method] = alias[method].bind(alias)
-	    })
-
-	    return dsl
-	}
-
-
-	proto.cache = function(value) {
-	    this.__cache = !!value
-	}
-
-	proto.set = function(name, selector, getAll) {
-	    if (typeof name === 'object') {
-	        getAll = selector
-	        for (var p in name) {
-	            this.set(p, name[p], getAll)
-	        }
-	        return
-	    }
-
-	    if (typeof selector === 'object') {
-	        selector = selector.selector
-	        getAll = selector.getAll
-	    }
-
-	    if (/^\[.*\]$/.test(selector)) {
-	        selector = selector.slice(1, selector.length - 1)
-	        getAll = true
-	    }
-
-	    this.__map[name] = {
-	        selector: selector,
-	        getAll: !!getAll
-	    }
-
-	    return this
-	}
-
-	proto.unset = function(name) {
-	    delete this.__map[name]
-	    return this
-	}
-
-	proto.clear = function() {
-	    this.__map = {}
-	}
-
-	proto.el = function(name) {
-	    var map = this.__map[name]
-	    if (map) {
-	        if (this.__cache && result in map) { 
-	            // 只要有result这个成员，不论它是否为空
-	            return map.result
-	        } else {
-	            var result
-	            if (map.getAll) {
-	                result = document.querySelectorAll(map.selector)
-	            } else {
-	                result = document.querySelector(map.selector)
-	            }
-
-	            if (this.__cache) {
-	                this.result = result
-	            }
-
-	            return result
-	        }
-	    }
-	}
-
-	module.exports = Alias
 
 /***/ }
 /******/ ])

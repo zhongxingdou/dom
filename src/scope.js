@@ -1,5 +1,3 @@
-var Alias = require('./alias')
-
 var _scope = null
 var _lastScope = null
 
@@ -22,7 +20,7 @@ function resetScope() {
 function withIn(wrapEl, fn) {
     try {
         setScope(wrapEl)
-        fn(wrapEl, Alias.dsl(true))
+        fn(wrapEl)
     } finally {
         resetScope()
     }

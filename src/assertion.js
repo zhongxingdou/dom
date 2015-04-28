@@ -11,8 +11,23 @@ function isButton(element) {
     return _getFieldType(element) === 'BUTTON'
 }
 
+function isElement(element){
+    return element instanceof Element
+}
+
+function isDomCollection(collection){
+    if(!collection)return false
+    return collection instanceof HTMLCollection || collection instanceof NodeList
+}
+
+function isLabelSelector(label){
+    return /^@/.test(label)
+}
 
 module.exports = {
     isField: isField,
-    isButton: isButton
+    isButton: isButton,
+    isElement: isElement,
+    isDomCollection: isDomCollection,
+    isLabelSelector: isLabelSelector
 }

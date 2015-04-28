@@ -1,38 +1,45 @@
 var util = require('./util')
 var findOne = util.findOne
+var by = require('./by')
+var assert = require('./assertion')
 
-function field(label) {
-    var el = byLabel(label)
-    if (Dom.isField(el)) {
+function field(labelOrName) {
+    if(assert.isLableSelector(labelOrName)){
+        var el = by.byLabel(labelOrName)
+    }else{
+        var el = by.oneByName(labelOrName)
+    }
+
+    if (assert.isField(el)) {
         return el
     }
 }
 
 function button(text) {
     var selector = 'input[type=button][value=' + text + ']'
-    var inputBtn = Dom.oneByCss(selector)
+    var inputBtn = by.oneByCss(selector)
     if (inputBtn) {
         return inputBtn
     } else {
-        return Dom.byText('button', text)
+        return by.byText('button', text)
     }
 }
 
 function link(text) {
-    return Dom.byText('a', text)
+    return by.byText('a', text)
 }
 
 function fieldset(text) {
-    return Dom.byText('legend', text)
+    return by.byText('legend', text)
 }
 
 function hidden(name) {
     var selector = 'input[type=hidden][name=' + name + ']'
-    return Dom.oneByCss(selector)
+    return by.oneByCss(selector)
 }
 
 function form(text) {
-    var fieldset = Dom.fieldset(text)
+    var fieldset = fieldset(text)
     if (fieldset) {
         return fieldset.form
     }
@@ -64,11 +71,11 @@ function cell(table, rowIndex, colIndex) {
 }
 
 function group(label) {
-    var el = Dom.byText('label', label)
+    var el = by.byText('label', label)
     if (el) { //兴趣： 唱歌，跳舞
         //假定单选钮组和复选钮组的组label的for设置为组元素的name
         var groupName = el.getAttribute('for')
-        return Dom.byName(groupName)
+        return by.byName(groupName)
     }
     return []
 }

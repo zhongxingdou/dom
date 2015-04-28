@@ -1,6 +1,8 @@
 var scope = require('./scope')
+var assert = require('./assertion')
 
 var getScope = scope.getScope
+
 
 function _makeAttrExp(attr, value) {
     if (typeof attr === 'object') {
@@ -31,7 +33,41 @@ function oneByTag(tagName) {
 }
 
 function byCss(cssSelector) {
-    return getScope().querySelectorAll(cssSelector)
+    var type = typeof cssSelector
+    if (type === 'string') {
+        return getScope().querySelectorAll(cssSelector)
+    } else if (type === 'object') {
+
+    }
+}
+
+function define(config) {
+    var comp = {}
+    var el, selector, type
+    var isId = /^#[^ .\[\]]*$/
+    for (var name in config) {
+        selector = config[name]
+        type = typeof selector
+        el = null
+        if (type === 'string') {
+            if (assert.isLabelSelector(selector)) {
+                el = byLabel(selector)
+            } else if (isId.test(selector)) {
+                el = byId(selector.slice(1))
+            } else {
+                el = byCss(selector)
+                if (el.length === 0) el = null
+            }
+        } else if (type === 'object') {
+            if (assert.isElement(selector) || assert.isDomCollection(selector)) {
+                el = selector
+            } else {
+                el = define(selector)
+            }
+        }
+        comp[name] = el
+    }
+    return comp
 }
 
 function oneByCss(cssSelector) {
@@ -57,14 +93,10 @@ function oneByClass(className) {
 function byAttr(tag, attr, value) {
     var exp = _makeAttrExp(attr, value)
     if (typeof tag === 'string') {
-        return by.oneByCss(tag + exp)
+        return oneByCss(tag + exp)
     } else if (tag.querySelector) {
         return tag.querySelector(exp)
     }
-}
-
-function byTitle(tag, title) {
-    return byAttr(tag, 'title', title)
 }
 
 function byText(tagName, text) {
@@ -79,6 +111,12 @@ function byText(tagName, text) {
 }
 
 function byLabel(text, tags) {
+    if(assert.isLabelSelector(text)){
+        text = text.slice(1)
+    }else{
+        return
+    }
+
     var label = byText('label', text)
     if (!label) {
         return null
@@ -116,7 +154,7 @@ module.exports = {
 
     byAttr: byAttr,
 
-    byTitle: byTitle,
     byText: byText,
-    byLabel: byLabel
+    byLabel: byLabel,
+    define: define
 }
