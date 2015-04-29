@@ -174,25 +174,18 @@ Dom.row(userTable, {weight: function(man){ man > 100 } })
 Dom.cell(userTable, 8, 9)
 ```
 
-Alias
+define
 ---------
-in Dom.js, a Alias is a short name of complex selector express
-
 
 ```javascript
 
-Dom.withIn(aWrap, function(aWrap, el){
-    el.set('SaveProdBtn', "#userInfoForm button")
-	// equals to
-	el.set({
-		'saveProdBtn': '#userInforForm button'
-	})
-
-	el('SaveProdBtn')
-	// => <button>
-
-	// remove a short name
-	el.unset('SaveProdBtn')
+var useForm = Dom.define({
+    form: '#userInfoForm',
+    userName: Dom.field('userName'),
+    interest: Dom.group('interest'),
+    buttons: {
+        save: Dom.button('Save')
+    }
 })
 
 ```
