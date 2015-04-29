@@ -116,9 +116,10 @@ Dom.byLabel('UserName')
 // <option value="086">China</option>
 Dom.byText('option', 'China')
 
-// <ul title="shoppingList"></ul>
-Dom.byTitle('shoppingList')
-
+Dom.byAttr('input', {
+    name: 'interest',
+    type: 'checkbox'
+})
 
 ```
 
