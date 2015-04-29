@@ -120,6 +120,7 @@ Dom.byAttr('input', {
     name: 'interest',
     type: 'checkbox'
 })
+// => <input type="checkbox" name="interest" />
 
 ```
 
