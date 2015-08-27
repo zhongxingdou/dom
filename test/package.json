@@ -1,0 +1,17 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test-all.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.9.3",
+    "mocha": "^2.2.5",
+    "webpack": "^1.11.0"
+  }
+}
