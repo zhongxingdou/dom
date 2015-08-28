@@ -159,7 +159,7 @@
 	      return Dom.oneByName(myname) === input;
 	    });
 	  });
-	  return describe('byName()', function() {
+	  describe('byName()', function() {
 	    var input1, input2, myname;
 	    input1 = input2 = null;
 	    myname = 'myname';
@@ -174,6 +174,40 @@
 	    });
 	    return it('normal', function() {
 	      return Dom.byName(myname).length === 2;
+	    });
+	  });
+	  describe('byLabel()', function() {
+	    var id, input, label, labelText;
+	    input = label = null;
+	    id = 'id';
+	    labelText = 'user';
+	    before(function() {
+	      input = createEl('input', id);
+	      label = createEl('label');
+	      label.innerText = labelText;
+	      return label.setAttribute('for', id);
+	    });
+	    after(function() {
+	      removeEl(input);
+	      return removeEl(label);
+	    });
+	    return it('normal', function() {
+	      return assert(Dom.byLabel('@' + labelText) === input);
+	    });
+	  });
+	  return describe('byText()', function() {
+	    var btnText, button;
+	    button = null;
+	    btnText = 'mybtn';
+	    before(function() {
+	      button = createEl('button');
+	      return button.innerText = btnText;
+	    });
+	    after(function() {
+	      return removeEl(button);
+	    });
+	    return it('normal', function() {
+	      return assert(Dom.byText('button', btnText) === button);
 	    });
 	  });
 	});

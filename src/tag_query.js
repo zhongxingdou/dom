@@ -4,10 +4,11 @@ var by = require('./by')
 var assert = require('./assertion')
 
 function field(labelOrName) {
+    var el
     if(assert.isLableSelector(labelOrName)){
-        var el = by.byLabel(labelOrName)
+        el = by.byLabel(labelOrName)
     }else{
-        var el = by.oneByName(labelOrName)
+        el = by.oneByName(labelOrName)
     }
 
     if (assert.isField(el)) {
@@ -29,38 +30,60 @@ function link(text) {
     return by.byText('a', text)
 }
 
-function fieldset(text) {
-    return by.byText('legend', text)
-}
-
-function hidden(name) {
-    var selector = 'input[type=hidden][name=' + name + ']'
-    return by.oneByCss(selector)
-}
-
-function form(text) {
-    var fieldset = fieldset(text)
-    if (fieldset) {
-        return fieldset.form
-    }
-    return null
-}
-
 /**
  * Dom.row(table, 3)
- * Dom.row(table, {col1: x, col2: y})
- * Dom.row(table, {col1: function(x){x > 100}, col2: y})
+ * Dom.row(table, [1, 3, 5])
+ * Dom.row(table, 'odd')
+ * Dom.row(table, 'even')
+ * Dom.row(table, function(row, i) {
+ *   return i % 3 === 0  
+ * })
  */
 function row(table, where) {
-    if (typeof where === 'object') {
-        var cols = Object.keys(where)
-            // var thead = 
+    if(typeof where === 'number') {
+        return table.rows[where]
     }
 
-    return findOne(table.rows, function(row) {
-        var cell = row.children[0]
-        return cell && cell.textContent.trim() === rowTitle
-    })
+    if (Array.isArray(where)) {
+        return where.map(function(i) {
+            return table.rows[i]
+        })
+    }
+
+    if(typeof where === 'string') {
+        var i = 0,
+            l = table.rows.length,
+            rows = []
+        switch(where) {
+            case 'odd':
+                while(i < l) {
+                    if((i+1) % 2 === 1) {
+                        rows.push(table.rows[i])
+                    }
+                    i++
+                }
+                return rows
+            case 'even':
+                while(i < l) {
+                    if((i+1) % 2 === 0) {
+                        rows.push(table.rows[i])
+                    }
+                    i++
+                }
+                return rows
+        }
+    }
+
+    if(typeof where === 'function') {
+        var rows2 = [], tr
+        for(var j=0, k=table.rows.length; j<k; j++) {
+            tr = table.rows[j]
+            if(where(tr, j)) {
+                rows2.push(tr)
+            }
+        }
+        return rows2
+    }
 }
 
 function cell(table, rowIndex, colIndex) {
@@ -84,9 +107,6 @@ module.exports = {
     field: field,
     button: button,
     link: link,
-    fieldset: fieldset,
-    hidden: hidden,
-    form: form,
     row: row,
     cell: cell,
     group: group

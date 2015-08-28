@@ -77,3 +77,33 @@ describe 'by', ->
 
     it 'normal', ->
       Dom.byName(myname).length == 2
+
+  describe 'byLabel()', ->
+    input = label = null 
+    id = 'id'
+    labelText = 'user'
+    before ->
+      input = createEl('input', id)
+      label = createEl('label')
+      label.innerText = labelText
+      label.setAttribute('for', id)
+
+    after ->
+      removeEl(input)
+      removeEl(label)
+
+    it 'normal', ->
+      assert Dom.byLabel('@' + labelText) == input
+
+  describe 'byText()', ->
+    button = null
+    btnText = 'mybtn'
+    before ->
+      button = createEl('button')
+      button.innerText = btnText
+
+    after ->
+      removeEl(button)
+
+    it 'normal', ->
+      assert Dom.byText('button', btnText) == button
