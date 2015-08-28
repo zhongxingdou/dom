@@ -4,7 +4,8 @@
   "description": "",
   "main": "test-all.js",
   "scripts": {
-    "test": "test"
+    "test": "mocha-phantomjs runner.html",
+    "build": "webpack"
   },
   "author": "",
   "license": "ISC",
