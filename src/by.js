@@ -41,7 +41,7 @@ function byCss(cssSelector) {
     }
 }
 
-function define(config) {
+function combo(config) {
     var comp = {}
     var el, selector, type
     var isId = /^#[^ .\[\]]*$/
@@ -62,7 +62,7 @@ function define(config) {
             if (assert.isElement(selector) || assert.isDomCollection(selector)) {
                 el = selector
             } else {
-                el = define(selector)
+                el = combo(selector)
             }
         }
         comp[name] = el
@@ -111,9 +111,9 @@ function byText(tagName, text) {
 }
 
 function byLabel(text, tags) {
-    if(assert.isLabelSelector(text)){
+    if (assert.isLabelSelector(text)) {
         text = text.slice(1)
-    }else{
+    } else {
         return
     }
 
@@ -156,5 +156,5 @@ module.exports = {
 
     byText: byText,
     byLabel: byLabel,
-    define: define
+    combo: combo
 }

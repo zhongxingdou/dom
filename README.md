@@ -176,12 +176,12 @@ Dom.row(userTable, {weight: function(man){ man > 100 } })
 Dom.cell(userTable, 8, 9)
 ```
 
-define
+combo
 ---------
 
 ```javascript
 
-var useForm = Dom.define({
+var useForm = Dom.byCombo({
     form: '#userInfoForm',
     userName: Dom.field('userName'),
     interest: Dom.group('interest'),
