@@ -41,7 +41,7 @@ function byCss(cssSelector) {
     }
 }
 
-function combo(config) {
+function byCombo(config) {
     var comp = {}
     var el, selector, type
     var isId = /^#[^ .\[\]]*$/
@@ -156,5 +156,5 @@ module.exports = {
 
     byText: byText,
     byLabel: byLabel,
-    combo: combo
+    byCombo: byCombo
 }
